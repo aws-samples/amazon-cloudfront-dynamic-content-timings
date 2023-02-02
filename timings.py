@@ -106,7 +106,7 @@ for request_nr in range(0, requests_total):
 print(tabulate(
     results,
     tablefmt='grid',
-    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TPC+SSL time", "Upstream connect time", "Download speed, Mbps"]
+    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TCP+SSL time", "Upstream connect time", "Download speed, Mbps"]
     )
 )
 
@@ -114,7 +114,7 @@ reused_conns_download_times_avg = 0 if reused_conns_count == 0 else round(reused
 new_conns_download_times_avg = 0 if requests_total - reused_conns_count == 0 else round (new_conns_download_times / (requests_total - reused_conns_count ))
 latency_gain = 'NA' if new_conns_download_times_avg == 0 else round(100 - reused_conns_download_times_avg / new_conns_download_times_avg * 100, 1)
 
-print ("Total connections:", requests_total )
+print ("Total downstream connections:", requests_total )
 print ("Number of re-used upstream connections:", reused_conns_count)
 print ('Average download time for re-used upstream connections:', reused_conns_download_times_avg, "ms")
 print ("Average download time for new upstream connections:", new_conns_download_times_avg, "ms")
