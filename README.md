@@ -4,7 +4,7 @@
 This sample project provides a python script for CloudFront timings measurement. 
 The script uses [Pycurl](http://pycurl.io/) module and utilizes Curl [write-out](https://everything.curl.dev/usingcurl/verbose/writeout) capabilities. 
 
-:**Note**
+**Note**
 If you don't want to install Pycurl on your local machine, see below how you can run the script using AWS CloudShell
 
 The following metrics are captured by curl and printed out:
@@ -13,9 +13,9 @@ The following metrics are captured by curl and printed out:
 - CONNECT_TIME: the total time in seconds from the start until the connection to the remote host (or proxy) was completed.
 - APPCONNECT_TIME:  the time, in seconds, it took from the start until the SSL/SSH connect/handshake to the remote host was completed
 - STARTTRANSFER_TIME: the time, in seconds, it took from the start until the first byte is received by libcurl (**User First Byte Latency**)
-- CURLINFO_SPEED_DOWNLOAD, bytes/second
+- SPEED_DOWNLOAD: the download speed in bytes/second
 
-Additionally, (CloudFront Server-Timing header)[https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html#server-timing-header] is used to capture the following metrics in response from CloudFront:
+Additionally, [CloudFront Server-Timing header](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html#server-timing-header) is used to capture the following metrics in response from CloudFront:
 - cdn-upstream-connect: the time in milliseconds between when the origin DNS request completed and a TCP (and TLS, if applicable) connection to the origin completed. A value of zero (0) indicates that CloudFront reused an existing connection
 - cdn-upstream-fbl: the time in milliseconds between when the origin HTTP request is completed and when the first byte is received in the response from the origin (**Origin First Byte Latency**)
 - cdn-downstream-fbl: the time in milliseconds  between when the edge location finished receiving the request and when it sent the first byte of the response to the viewer (**CloudFront First Byte Latency**)
@@ -27,7 +27,7 @@ The script can be used standalone against any CloudFront distribution with the S
 
 However, to make testing easier the test system is provided as part of this sample.
 The test system comprises of CloudFront distribution and Amazon EC2 with Nginx server running behind Application Load Balancer. 
-CloudFront distribution uses a managed cache policy CachingDisabled (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-policy-caching-disabled) which is useful for dynamic content. 
+CloudFront distribution uses a managed cache policy [CachingDisabled](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-policy-caching-disabled) which is useful for dynamic content. 
 It also includes some security best practices, specifically, ALB and EC2 Security Group allows only requests coming from the CloudFront distribution, disabling any requests coming directly from the Internet.
 
 ![Solution Diagram](/pics/arch.png)
@@ -83,7 +83,7 @@ Average download time for new upstream connections: 141 ms
 Latency gain: 38.3 %
 ```
 
-Try experimenting with the number of requests using *-n* argument. Note that the more requests you send, the more effective upstream connection reuse resulting in lower total latency. 
+Try experimenting with the number of requests using *-n* argument. Note that the more requests you send, the more effective upstream connection reuse, resulting in lower total latency. 
 You may also check if you can connect to ALB or EC2 directly - these requests should be blocked as we only allow requests from the CloudFront distribution.
 
 ### Run script in CloudShell
