@@ -220,12 +220,12 @@ resource "aws_cloudfront_distribution" "distribution" {
 }
 
 # Outputs
-output "nginx_public_dns" {
-  value = aws_instance.nginx.public_dns
-}
-output "alb_public_dns" {
-  value = aws_lb.lb.dns_name
-}
+#output "nginx_public_dns" {
+#  value = aws_instance.nginx.public_dns
+#}
+#output "alb_public_dns" {
+#  value = aws_lb.lb.dns_name
+#}
 output "cloudfront_distribution" {
   value = aws_cloudfront_distribution.distribution.domain_name
 }

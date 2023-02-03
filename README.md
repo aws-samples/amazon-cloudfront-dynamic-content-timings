@@ -1,92 +1,104 @@
 # cloudfront-dynamic-content-timings
 
 
+This sample project provides a python script for CloudFront timings measurement. 
+The script uses [Pycurl](http://pycurl.io/) module and utilizes Curl [write-out](https://everything.curl.dev/usingcurl/verbose/writeout) capabilities. 
 
-## Getting started
+:**Note**
+If you don't want to install Pycurl on your local machine, see below how you can run the script using AWS CloudShell
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The following metrics are captured by curl and printed out:
+- TOTAL_TIME: the total time in seconds for the previous transfer, including name resolving, TCP connect etc. 
+- NAMELOOKUP_TIME: the total time in seconds from the start until the name resolving was completed.
+- CONNECT_TIME: the total time in seconds from the start until the connection to the remote host (or proxy) was completed.
+- APPCONNECT_TIME:  the time, in seconds, it took from the start until the SSL/SSH connect/handshake to the remote host was completed
+- STARTTRANSFER_TIME: the time, in seconds, it took from the start until the first byte is received by libcurl (**User First Byte Latency**)
+- CURLINFO_SPEED_DOWNLOAD, bytes/second
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Additionally, (CloudFront Server-Timing header)[https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html#server-timing-header] is used to capture the following metrics in response from CloudFront:
+- cdn-upstream-connect: the time in milliseconds between when the origin DNS request completed and a TCP (and TLS, if applicable) connection to the origin completed. A value of zero (0) indicates that CloudFront reused an existing connection
+- cdn-upstream-fbl: the time in milliseconds between when the origin HTTP request is completed and when the first byte is received in the response from the origin (**Origin First Byte Latency**)
+- cdn-downstream-fbl: the time in milliseconds  between when the edge location finished receiving the request and when it sent the first byte of the response to the viewer (**CloudFront First Byte Latency**)
 
-## Add your files
+These metrics enable us to analyse performance bottlenecks in the round trip request processing flow between user and Origin.
+Also, we can see the impact of upstream connection reuse by CloudFront on the total download time.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+The script can be used standalone against any CloudFront distribution with the Server-Timing header enabled. 
+
+However, to make testing easier the test system is provided as part of this sample.
+The test system comprises of CloudFront distribution and Amazon EC2 with Nginx server running behind Application Load Balancer. 
+CloudFront distribution uses a managed cache policy CachingDisabled (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html#managed-cache-policy-caching-disabled) which is useful for dynamic content. 
+It also includes some security best practices, specifically, ALB and EC2 Security Group allows only requests coming from the CloudFront distribution, disabling any requests coming directly from the Internet.
+
+![Solution Diagram](/pics/arch.png)
+
+
+The system is provisioned using Terraform.
+Frst make sure you use the right AWS account - for example, you might use a dev account:
+`export AWS_PROFILE=myDevAccount`
+
+You may also change the region where resources are provisioned to by changing *aws_region* in variable.tf file (default is eu-west-1).
+
+Run the following commands:
+```
+terraform init
+terraform apply
+```
+
+Once the installation is completed, the CloudFront distribution URL will be printed out. 
+Use it to run the script:
+
+`timings.py -url https://d3w4bt3xbw4rhc.cloudfront.net -n 100`
+
+Example output:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.aws.dev/yakubovy/cloudfront-dynamic-content-timings.git
-git branch -M main
-git push -uf origin main
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|   Request number |   Download time |   DNS resolution |   Downstream connect time |   Downstream TCP+SSL time |   Upstream TCP+SSLt time |   User FBL |   CF FBL |   Origin FBL |   Download speed, Mbps |
++==================+=================+==================+===========================+===========================+==========================+============+==========+==============+========================+
+|                1 |           220.8 |             64.6 |                      69.5 |                     103.6 |                       39 |      104.3 |      106 |           85 |                    0.1 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                2 |           124   |              0   |                       5.9 |                      27.3 |                       40 |       27.5 |       87 |           86 |                    0.2 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                3 |            91.6 |              0   |                       4.9 |                      26.2 |                        0 |       26.5 |       55 |           43 |                    0.3 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                4 |           138.1 |              0   |                       5.6 |                      26.1 |                       40 |       26.3 |      102 |           89 |                    0.2 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                5 |           130.5 |              0   |                       5.4 |                      24.7 |                       39 |       24.9 |       94 |           84 |                    0.2 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                6 |           120.4 |              0.1 |                       6.6 |                      26.1 |                       39 |       26.3 |       86 |           84 |                    0.2 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                7 |            82.4 |              0.1 |                       6.5 |                      27   |                        0 |       27.2 |       46 |           44 |                    0.3 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                8 |            83.8 |              0   |                       5.1 |                      26.3 |                        0 |       26.5 |       49 |           47 |                    0.3 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|                9 |            89.4 |              0   |                       5.5 |                      26.7 |                        0 |       26.9 |       55 |           46 |                    0.3 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+|               10 |           110   |              0   |                       4.6 |                      18.4 |                       39 |       18.5 |       85 |           83 |                    0.2 |
++------------------+-----------------+------------------+---------------------------+---------------------------+--------------------------+------------+----------+--------------+------------------------+
+Total downstream connections: 10
+Number of re-used upstream connections: 4
+Average download time for re-used upstream connections: 87 ms
+Average download time for new upstream connections: 141 ms
+Latency gain: 38.3 %
 ```
 
-## Integrate with your tools
+Try experimenting with the number of requests using *-n* argument. Note that the more requests you send, the more effective upstream connection reuse resulting in lower total latency. 
+You may also check if you can connect to ALB or EC2 directly - these requests should be blocked as we only allow requests from the CloudFront distribution.
 
-- [ ] [Set up project integrations](https://gitlab.aws.dev/yakubovy/cloudfront-dynamic-content-timings/-/settings/integrations)
+### Run script in CloudShell
 
-## Collaborate with your team
+To run the script from the Cloud perform the following steps:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+- Go to [CloudShell console](console.aws.amazon.com/cloudshell/home)
+- Install the following modules:
+```
+su yum install python3-pycurl.x86_64
+pip3 install tabulate
+```
+- Select Actions -> Upload file and upload timings.py script
+- Run script
+```
+python3 timings.py -url https://d3w4bt3xbw4rhc.cloudfront.net -n 10
+```
 
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.

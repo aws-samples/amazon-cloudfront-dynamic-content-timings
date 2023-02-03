@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 
 import pycurl
 import argparse
@@ -75,6 +74,7 @@ for request_nr in range(0, requests_total):
     namelookup_time = round(c.getinfo(pycurl.NAMELOOKUP_TIME) * 1000, 1)
     appconnect_time = round(c.getinfo(pycurl.APPCONNECT_TIME) * 1000, 1)
     # pretransfer_time = round(c.getinfo(pycurl.PRETRANSFER_TIME) * 1000, 1)
+    starttransfer_time = round(c.getinfo(pycurl.PRETRANSFER_TIME) * 1000, 1)
     download_speed = round(c.getinfo(pycurl.SPEED_DOWNLOAD) /125000, 1) #Mbps
     # remote_ip = c.getinfo(pycurl.PRIMARY_IP)
     # local_port = c.getinfo(pycurl.LOCAL_PORT)
@@ -95,18 +95,22 @@ for request_nr in range(0, requests_total):
                         reused_conns_download_times += total_time
                     else:
                         new_conns_download_times += total_time
+                elif key == 'cdn-upstream-fbl':
+                    origin_fbl = value
+                elif key == 'cdn-downstream-fbl':
+                    cf_fbl = value
     else:
         print("CloudFront Server-Timing headers are missing")
         sys.exit()
 
     request_nr += 1
-    results.append([request_nr, total_time, namelookup_time, downstream_connect_time, appconnect_time, upstream_connect_time, download_speed])
+    results.append([request_nr, total_time, namelookup_time, downstream_connect_time, appconnect_time, upstream_connect_time, starttransfer_time, cf_fbl, origin_fbl, download_speed])
 
 
 print(tabulate(
     results,
     tablefmt='grid',
-    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TCP+SSL time", "Upstream connect time", "Download speed, Mbps"]
+    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TCP+SSL time", "Upstream TCP+SSL time", "User FBL", "CF FBL", "Origin FBL", "Download speed, Mbps"]
     )
 )
 
