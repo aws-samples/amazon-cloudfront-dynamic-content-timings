@@ -8,7 +8,8 @@ variable "aws_region" {
 variable "ami_id" {
   description = "ami id"
   type        = string
-  default     = "ami-05e786af422f8082a" #Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2022-12-01
+  #default     = "ami-05e786af422f8082a" #Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2022-12-01
+  default     = "ami-04e3f0d06628278cc" #Canonical, Ubuntu, 18.04 LTS, amd64 bionic image build on 2022-12-07
 }
 
 variable "instance_type" {

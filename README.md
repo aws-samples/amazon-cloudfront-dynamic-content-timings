@@ -37,7 +37,7 @@ The system is provisioned using Terraform.
 Frst make sure you use the right AWS account - for example, you might use a dev account:
 `export AWS_PROFILE=myDevAccount`
 
-You may also change the region where resources are provisioned to by changing *aws_region* in variable.tf file (default is eu-west-1).
+You may also change instance configuration and the region where resources are provisioned to by changing *aws_region* in variable.tf file (default is eu-west-1).
 
 Run the following commands:
 ```
