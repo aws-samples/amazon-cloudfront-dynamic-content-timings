@@ -99,6 +99,14 @@ resource "aws_security_group_rule" "ingress_ALB" {
 resource "aws_instance" "nginx" {
   ami                  = var.ami_id
   instance_type        = var.instance_type
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
+  #monitoring = true
+  #root_block_device {
+  #  encrypted     = true
+  #}
   subnet_id            = aws_subnet.public_subnet[1].id
   security_groups      = [aws_security_group.front-end-sg.id]
   user_data            = file("userdata.sh")
@@ -128,6 +136,8 @@ resource "aws_lb" "lb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.front-end-sg.id]
   subnets            = aws_subnet.public_subnet.*.id
+  enable_deletion_protection = true
+  drop_invalid_header_fields = true
 }
 
 # Create Listener
