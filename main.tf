@@ -103,10 +103,6 @@ resource "aws_instance" "nginx" {
     http_endpoint = "enabled"
     http_tokens   = "required"
   }
-  #monitoring = true
-  #root_block_device {
-  #  encrypted     = true
-  #}
   subnet_id            = aws_subnet.public_subnet[1].id
   security_groups      = [aws_security_group.front-end-sg.id]
   user_data            = file("userdata.sh")
@@ -229,13 +225,6 @@ resource "aws_cloudfront_distribution" "distribution" {
   }
 }
 
-# Outputs
-#output "nginx_public_dns" {
-#  value = aws_instance.nginx.public_dns
-#}
-#output "alb_public_dns" {
-#  value = aws_lb.lb.dns_name
-#}
 output "cloudfront_distribution" {
   value = aws_cloudfront_distribution.distribution.domain_name
 }
