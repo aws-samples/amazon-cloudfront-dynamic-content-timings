@@ -104,19 +104,19 @@ for request_nr in range(0, requests_total):
         sys.exit()
 
     request_nr += 1
-    results.append([request_nr, total_time, namelookup_time, downstream_connect_time, appconnect_time, upstream_connect_time, starttransfer_time, cf_fbl, origin_fbl, download_speed])
+    results.append([request_nr, total_time, namelookup_time, downstream_connect_time, appconnect_time, starttransfer_time,  upstream_connect_time, origin_fbl, cf_fbl, download_speed])
 
 
 print(tabulate(
     results,
     tablefmt='grid',
-    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TCP+SSL time", "Upstream TCP+SSL time", "User FBL", "CF FBL", "Origin FBL", "Download speed, Mbps"]
+    headers=["Request number", "Download time", "DNS resolution", "Downstream connect time", "Downstream TCP+SSL time", "User FBL", "Upstream TCP+SSL time", "Origin FBL", "CF FBL", "Download speed, Mbps"]
     )
 )
 
-reused_conns_download_times_avg = 0 if reused_conns_count == 0 else round(reused_conns_download_times / reused_conns_count)
-new_conns_download_times_avg = 0 if requests_total - reused_conns_count == 0 else round (new_conns_download_times / (requests_total - reused_conns_count ))
-latency_gain = 'NA' if new_conns_download_times_avg == 0 else round(100 - reused_conns_download_times_avg / new_conns_download_times_avg * 100, 1)
+reused_conns_download_times_avg = 'NA' if reused_conns_count == 0 else round(reused_conns_download_times / reused_conns_count)
+new_conns_download_times_avg = 'NA' if requests_total - reused_conns_count == 0 else round (new_conns_download_times / (requests_total - reused_conns_count ))
+latency_gain = 'NA' if new_conns_download_times_avg == 'NA' or reused_conns_download_times_avg == 'NA' else round(100 - reused_conns_download_times_avg / new_conns_download_times_avg * 100, 1)
 
 print ("Total downstream connections:", requests_total )
 print ("Number of re-used upstream connections:", reused_conns_count)
