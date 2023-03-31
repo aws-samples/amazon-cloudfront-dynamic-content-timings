@@ -90,10 +90,10 @@ You may also check if you can connect to ALB or EC2 directly - these requests sh
 
 To run the script from the Cloud perform the following steps:
 
-- Go to [CloudShell console](console.aws.amazon.com/cloudshell/home)
+- Go to [CloudShell console](https://console.aws.amazon.com/cloudshell/home)
 - Install the following modules:
 ```
-su yum install python3-pycurl.x86_64
+sudo yum install python3-pycurl.x86_64
 pip3 install tabulate
 ```
 - Select Actions -> Upload file and upload timings.py script
