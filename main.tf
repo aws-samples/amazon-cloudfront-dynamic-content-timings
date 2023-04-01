@@ -200,7 +200,7 @@ resource "aws_cloudfront_distribution" "distribution" {
   }
 
   enabled             = true
-  default_root_object = "aws_logo.png"
+  default_root_object = "test.png"
 
   default_cache_behavior {
     allowed_methods             = ["GET", "HEAD", "OPTIONS"]
